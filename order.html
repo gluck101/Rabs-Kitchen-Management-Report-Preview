@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Tracking</title>
+
+  <!-- Firebase v8 CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+
+  <!-- Styles -->
+  <style>
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f3f3;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #order-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .order-item {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .order-item:hover {
+      transform: scale(1.02);
+    }
+
+    .order-item p {
+      margin: 8px 0;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .order-item span {
+      font-weight: bold;
+      color: #1d72b8;
+    }
+
+    /* Preloader Styles */
+    #preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999; /* Ensure it covers everything */
+      display: none; /* Hidden by default */
+    }
+
+    #preloader img {
+      width: 100px; /* Adjust size as needed */
+      margin-bottom: 20px;
+    }
+
+    #preloader p {
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Real-Time Order Tracking</h1>
+  <div id="order-container">
+    <!-- New orders will be displayed here -->
+  </div>
+
+  <!-- Preloader -->
+  <div id="preloader">
+    <img src="Spinner@1x-1.0s-200px-200px.gif" alt="Loading..." /> <!-- Your spinner GIF -->
+    <p>You have a new Order</p>
+    <audio id="alertSound" src="message.mp3" preload="auto" loop></audio>
+  </div>
+
+  <!-- Firebase and Script -->
+  <script>
+    // Initialize Firebase  
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvQ1L82qhpIplABuAvtQkK7nHDzK7Dcik",
+        authDomain: "acheke-man-8aedc.firebaseapp.com",
+        databaseURL: "https://acheke-man-8aedc-default-rtdb.firebaseio.com",
+        projectId: "acheke-man-8aedc",
+        storageBucket: "acheke-man-8aedc.appspot.com",
+        messagingSenderId: "364612494845",
+        appId: "1:364612494845:web:e635b6929661ba2dfe6594",
+        measurementId: "G-PM9S927B9L"
+    };
+  
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Function to listen for new orders in real-time
+    function orderListener() {
+      const ordersRef = db.ref("orders");
+      ordersRef.on("child_added", (snapshot) => {
+        const orderData = snapshot.val();
+        displayOrder(orderData); // Display order on the page
+        showPreloader(); // Show the preloader with sound
+      });
+    }
+
+    // Function to display order details in the DOM
+    function displayOrder(order) {
+      const orderContainer = document.getElementById("order-container");
+      const orderElement = document.createElement("div");
+      orderElement.classList.add("order-item");
+
+      // Access the order details from formData and cart
+      const customerName = order.formData?.name || "N/A";
+      const customerPhone = order.formData?.phone || "N/A";
+      const deliveryLocation = order.formData?.deliveryLocation || "N/A";
+      const deliveryType = order.formData?.deliveryType || "N/A";
+      const cartItems = order.cart || [];
+
+      // Calculate total amount and quantity
+      const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+      const totalQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+      // Populate order details
+      orderElement.innerHTML = `
+        <p><span>Name:</span> ${customerName}</p>
+        <p><span>Phone:</span> ${customerPhone}</p>
+        <p><span>Delivery Type:</span> ${deliveryType}</p>
+        <p><span>Location:</span> ${deliveryLocation}</p>
+        <p><span>Items Ordered:</span> ${cartItems.map(item => `${item.name} (Qty: ${item.quantity})`).join(", ")}</p>
+        <p><span>Total Amount:</span> GHS ${totalAmount}</p>
+        <p><span>Total Quantity:</span> ${totalQuantity}</p>
+      `;
+
+      // Append the order element to the container
+      orderContainer.appendChild(orderElement);
+    }
+
+    // Function to show the preloader
+    function showPreloader() {
+      const preloader = document.getElementById('preloader');
+      const alertSound = document.getElementById('alertSound');
+      preloader.style.display = 'flex'; // Show preloader
+      alertSound.play(); // Play sound
+    }
+
+    // Function to hide the preloader
+    function hidePreloader() {
+      const preloader = document.getElementById('preloader');
+      const alertSound = document.getElementById('alertSound');
+      preloader.style.display = 'none'; // Hide preloader
+      alertSound.pause(); // Stop sound
+      alertSound.currentTime = 0; // Reset sound
+    }
+
+    // Initialize listener on page load
+    document.addEventListener("DOMContentLoaded", () => {
+      orderListener(); // Activate real-time listener
+      
+      // Add click event to hide preloader
+      const preloader = document.getElementById('preloader');
+      preloader.addEventListener('click', hidePreloader);
+    });
+  </script>
+</body>
+</html>

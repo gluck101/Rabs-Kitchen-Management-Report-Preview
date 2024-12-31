@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sales Summary</title>
+    <link rel="icon" href="rabs.jpeg" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            margin: 0;
+            font-size: 23px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            max-width: 800px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+        tr:nth-child(even) {
+            background-color: #e0f7e4;
+        }
+        canvas {
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .totals-footer {
+            text-align: left;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            margin: 20px auto;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .totals-footer p {
+            margin: 12px 0;
+            font-size: 16px;
+        }
+        /* Popup Styles */
+        #datePopup {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex; /* Change to flex for centering */
+            justify-content: center;
+            align-items: center;
+        }
+        #popupContent {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 90%; /* Set width for smaller screens */
+            max-width: 400px; /* Set a maximum width */
+            text-align: center; /* Center text inside the popup */
+        }
+        #popupContent h3 {
+            font-size: 1.2em; /* Adjust the main heading size */
+            margin: 0; /* Remove default margin */
+        }
+        #popupContent span {
+            font-size: 0.8em; /* Smaller font for the hint */
+            color: #666; /* Light gray color for the hint */
+        }
+        #popupContent label {
+            display: block;
+            margin: 10px 0 5px; /* Margin adjusted for top and bottom */
+            font-weight: bold; /* Make labels bold */
+            text-align: left; /* Align label text to the left */
+        }
+        #popupContent input {
+            width: 100%; /* Full width for input fields */
+            padding: 10px; /* Padding inside input fields */
+            border: 1px solid #ddd; /* Light border */
+            border-radius: 5px; /* Rounded corners */
+            box-sizing: border-box; /* Include padding and border in total width */
+        }
+        #popupContent button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px; /* Margin on top for spacing */
+            font-weight: bold; /* Make button text bold */
+            transition: background-color 0.3s; /* Smooth background color transition */
+        }
+        #popupContent button:hover {
+            background-color: #45a049; /* Darker shade on hover */
+        }
+
+
+
+        
+#loading-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.8); /* Slight transparency */
+    z-index: 9998; /* Lower z-index than the date popup */
+}
+
+#loading-spinner img {
+    width: 100px; /* Size of the spinner */
+}
+
+/* Hide spinner by default */
+#loading-spinner.hidden {
+    display: none;
+}
+
+
+        /* Container for the summary display */
+        .charts-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+}
+
+/* Circle container styles */
+/* General styles for the circle containers */
+.circle-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: white;
+    padding: 20px;
+    margin: 10px;
+}
+
+/* Color and alignment for each container */
+.circle-container.left {
+    background-color: #4CAF50; /* Green for Expected Sales */
+}
+
+.circle-container.center {
+    background-color: #2196F3; /* Blue for Obtained Sales */
+}
+
+.circle-container.right {
+    background-color: #f44336; /* Red for Lost/Gain in Revenue */
+}
+
+/* Media query for smaller screens (mobile view) */
+@media screen and (max-width: 600px) {
+    .summary-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        padding: 10px;
+    }
+    .circle-container {
+        width: 90px;  /* Smaller width on mobile */
+        height: 90px; /* Smaller height on mobile */
+        margin-bottom: 10px; /* Adjust bottom margin */
+        font-size: 0.9rem; /* Smaller font size for mobile */
+    }
+}
+
+canvas {
+    display: block;
+    margin: 0 auto;
+}
+
+
+    </style>
+</head>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Summary</title>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+</head>
+<body>
+
+    <div id="loading-spinner" class="hidden">
+        <img src="Spinner@1x-1.0s-200px-200px.gif" alt="Loading...">
+    </div>
+    
+    <h1 id="sales-summary-heading">SALE SUMMARY</h1>
+    <div id="charts-container"></div>
+    
+    <div id="sales-summary"></div> <!-- Ensure this element exists for error messages -->
+    
+    <button id="backButton" style="margin: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Back to Home
+    </button>
+    
+
+
+    <!-- Popup for date selection -->
+    <div id="datePopup">
+        <div id="popupContent">
+            <h3>Select Date <span>(report begins from 4th Oct.)</span></h3>
+            <label for="fromDate">From:</label>
+            <input type="date" id="fromDate">
+            <label for="toDate">To (Optional):</label>
+            <input type="date" id="toDate">
+            <button id="submitDate">Submit</button>
+        </div>
+    </div>
+
+
+
+
+
+
+    <div id="sales-changes">
+        <h3>Items with Percent Increase in Sales</h3>
+        <table id="increase-table">
+            <tr>
+                <th>Item</th>
+                <th>Percent Increase (%)</th>
+            </tr>
+        </table>
+
+        <h3>Items with Percent Decrease in Sales</h3>
+        <table id="decrease-table">
+            <tr>
+                <th>Item</th>
+                <th>Percent Drop (%)</th>
+            </tr>
+        </table>
+
+        <h3>Items with No Change in Sales</h3>
+        <table id="no-change-table">
+            <tr>
+                <th>Item</th>
+                <th>Percent Change (%)</th>
+            </tr>
+        </table>
+    </div>
+
+    <!-- <div id="charts-container"></div> -->
+
+
+
+   <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyBPaGSjayV3tk9KKH5FjRCkdlcWGczR_M",
+        authDomain: "rabs-kitchen-report-sheet.firebaseapp.com",
+        projectId: "rabs-kitchen-report-sheet",
+        storageBucket: "rabs-kitchen-report-sheet.appspot.com",
+        messagingSenderId: "856442665646",
+        appId: "1:856442665646:web:bd769e9c230bee32244b3f",
+        measurementId: "G-F5XBJY8PB7"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    // Items to track
+    const itemsToTrack = [
+        "Banku", "Eba", "Rice Ball", "Lagba", "Amala", "Tz", "Waghashi",
+        "Fried Meat", "Tuna", "Fried Fish", "Peanut Soup (Protein)",
+        "Cow Tail/Wele", "Agushi Soup Only", "Agushi Soup (Protein)",
+        "Salmon", "Intestine", "Okro Soup Only", "Okro Soup (Protein)",
+        "Palm Nut Soup (Protein)", "Egg Stew", "Kontomire", "Cabbage Stew",
+        "Fried Goat", "Cake", "Meat Pie", "Cup Cake", "Spring Roll", "Biscuit",
+        "Samosa", "Plantain Chips 10 Ghs", "Plantain Chips 20 Ghs",
+        "Plantain Chips 40 Ghs", "Plantain Chips 60 Ghs", "Chin Chin 10 Ghs",
+        "Chin Chin 20 Ghs", "Chin Chin 40 Ghs", "Chin Chin 60 Ghs",
+        "Labadi Yam with Chofi", "Fries with Grilled Chicken", "Fried Yam with Grilled Chicken",
+        "Chofi with fried yam", "Chofi", "Chofi with French Fries", "Jollof Rice",
+        "Fried Rice", "Fried Chicken", "Grilled Chicken", "Plain Rice",
+        "120 Acheke Tilapia", "150 Acheke and Tilapia", "Acheke and Cassava Fish",
+        "Banku and Tilapia 100", "Banku and Tilapia 120", "Jollof with Tilapia",
+        "Fried Rice with Tilapia", "Acheke with Chicken", "Plain Rice With Tilapia",
+        "Yam Chips and Tilapia", "Extra Tilapia 80", "Ghs 100 Extra Tilapia",
+        "Extra Fried Egg", "Cooked Egg", 
+         "Extra Plantain", "Extra Acheke",
+        "Extra Chili", "Cooked Yam", "Chicken stew (Protein)", "Meat stew (Protein)",
+        "Assorted Jollof", "Assorted Noodles", "Tilapia Light soup (Protein)",
+        "Goat Light Soup (Protein)", "Chicken light Soup (Protein)", "Meat light soup (Protein)",
+        "Dry Fish", "Snail", "Fufu", "Blue Jean", "Martinellis", "Mojito", "Can Sprite",
+         "Arizonal", "Novus", "Coke", "Fanta", "Frutelli", "Ceres", "Hollandia 1L", "Tarczyn", "Kallypo", 
+         "B.B Cocktail", "Welch", "Bel-Aqua", "Donsimon 1L", 
+         "Can Donsimon", "Can Malt", "Rab's Pine-Ginger Juice", "Rab's Sobo", "Rab's Tiger Nut Juice",
+         "Molinera",  "Lucozade", "Abest",  
+        
+     
+        
+       
+        
+        
+        
+        
+        //      "Lucozade", "Abest", "Martinellis", "Arizonal", 
+        // "Novus", "Coke", "Fanta", "Donsimon 1L", "Can Donsimon", "Rab's Sobo", "Rab's Tiger Nut Juice", 
+        // "Rab's Pine-Ginger Juice", "Frutelli", "Ceres",  "Hollandia 1L", "Tarczyn", "Kallypo", "B.B Cocktail", "Welch", "Bel-Aqua"
+
+    ];
+
+    // Initialize DailySales object to store sales data
+    const DailySales = {};
+    itemsToTrack.forEach(item => DailySales[item] = 0);
+    
+    const reportRef = db.ref();
+
+   // Fixed average sales data
+const fixedAverageSales = {
+    "Banku": 12,
+    "Eba": 2,
+    "Rice Ball": 5,
+    "Lagba": 8,
+    "Amala": 2,
+    "Tz": 12,
+    "Waghashi": 24,
+    "Fried Meat": 9,
+    "Tuna": 12,
+    "Fried Fish": 14,
+    "Peanut Soup (Protein)": 2,
+    "Cow Tail/Wele": 6,
+    "Agushi Soup Only": 2,
+    "Agushi Soup (Protein)": 1,
+    "Salmon": 4,
+    "Intestine": 7.5,
+    "Okro Soup Only": 4,
+    "Okro Soup (Protein)": 4,
+
+    "Palm Nut Soup (Protein)": 2,
+    "Egg Stew": 4,
+    "Kontomire": 5,
+    "Cabbage Stew": 3,
+    "Fried Goat": 5,
+    "Cake": 1,
+    "Meat Pie": 4,
+    "Cup Cake": 2,
+    "Spring Roll": 10,
+    "Biscuit": 3,
+    "Samosa": 12,
+    "Plantain Chips 10 Ghs": 1,
+    "Plantain Chips 20 Ghs": 1,
+    "Plantain Chips 40 Ghs": 1,
+    "Plantain Chips 60 Ghs": 1,
+    "Chin Chin 10 Ghs": 1,
+    "Chin Chin 20 Ghs": 1,
+    "Chin Chin 40 Ghs": 1,
+    "Chin Chin 60 Ghs": 1,
+    "Labadi Yam with Chofi": 2,
+    "Fries with Grilled Chicken": 1,
+    "Fried Yam with Grilled Chicken": 1,
+    "Chofi with fried yam":  1,
+    "Chofi":  4,
+    "Chofi with French Fries": 2,
+    "Jollof Rice": 30,
+    "Fried Rice": 15,
+    "Fried Chicken": 88,
+    "Grilled Chicken": 10,
+    "Plain Rice": 18,
+    "120 Acheke Tilapia": 20,
+    "150 Acheke and Tilapia": 16,
+    "Acheke and Cassava Fish": 1,
+    "Banku and Tilapia 100": 2,
+    "Banku and Tilapia 120": 1,
+    "Jollof with Tilapia": 1,
+    "Fried Rice with Tilapia": 1,
+    "Acheke with Chicken": 1,
+    "Plain Rice With Tilapia": 1,
+    "Yam Chips and Tilapia": 1,
+    "Extra Tilapia 80": 1,
+    "Ghs 100 Extra Tilapia": 1,
+    "Extra Fried Egg": 1,
+    "Cooked Egg": 5,
+    "Extra Plantain": 2,
+    "Extra Acheke": 6,
+    "Extra Chili": 1,
+    "Cooked Yam": 15,
+
+
+
+    "Chicken stew (Protein)": 4,
+    "Meat stew (Protein)": 7,
+    "Assorted Jollof": 1,
+    "Assorted Noodles": 2,
+    "Tilapia Light soup (Protein)": 4,
+    "Goat Light Soup (Protein)": 6,
+    "Chicken light Soup (Protein)": 3,
+    "Meat light soup (Protein)": 4,
+    "Dry Fish": 4,
+    "Snail": 3,
+    "Fufu": 7, 
+    "Blue Jean": 1,
+    "Martinellis": 4,
+    "Mojito": 8,
+    "Can Sprite": 7,
+    "Arizonal": 4,
+    "Novus": 5,
+    "Coke": 4,
+    "Fanta": 4,
+
+    "Frutelli": 4,
+    "Ceres": 2,
+    "Hollandia 1L": 2,
+    "Tarczyn": 2,
+    "Kallypo": 9,
+    "B.B Cocktail": 4,
+    "Welch": 1,
+    "Bel-Aqua": 33,
+
+    "Donsimon 1L": 5,
+    "Can Donsimon": 3,
+    "Can Malt": 9,
+    "Rab's Pine-Ginger Juice": 6,
+    "Rab's Sobo": 7,
+    "Rab's Tiger Nut Juice": 8,
+    "Molinera": 1,
+    "Lucozade": 1,
+    "Abest": 4,
+    
+
+    
+    
+    
+    
+   
+    
+    // "": 3,
+    // "": 2,
+    
+    // "": 3,
+    // "": 2,
+    // "": 9,
+    // "": 7,
+    // "": 5,
+    // "": 33,
+
+    // New items added
+    
+};
+
+    // Function to update the heading with fetched dates
+    function updateHeading(dates) {
+        const heading = document.getElementById('sales-summary-heading');
+        let headingText = 'SALE SUMMARY';
+
+        dates.sort();
+        if (dates.length === 1) {
+            headingText += ` FROM ${dates[0]}`;
+        } else if (dates.length > 1) {
+            headingText += ` FROM ${dates[0]} TO ${dates[dates.length - 1]}`;
+        }
+        heading.textContent = headingText;
+    }
+
+    // Function to convert a date to YYYY-MM-DD format
+    function formatDateToYMD(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = ('0' + (d.getMonth() + 1)).slice(-2); // Add leading zero if needed
+        const day = ('0' + d.getDate()).slice(-2);          // Add leading zero if needed
+        return `${year}-${month}-${day}`;
+    }
+
+    // Event listener for submit button in the popup
+    document.getElementById('submitDate').onclick = function() {
+        const fromDate = document.getElementById('fromDate').value;
+        const toDate = document.getElementById('toDate').value;
+
+        if (fromDate) {
+            const formattedFromDate = formatDateToYMD(fromDate);
+            const formattedToDate = toDate ? formatDateToYMD(toDate) : null;
+
+            console.log('Formatted From Date:', formattedFromDate, 'Formatted To Date:', formattedToDate);
+            fetchSalesData(formattedFromDate, formattedToDate);
+            document.getElementById('datePopup').style.display = 'none';
+        } else {
+            alert('Please select at least the "From" date.');
+        }
+    };
+
+    function fetchSalesData(fromDate, toDate) {
+    console.log('Fetching data for date range:', fromDate, toDate);
+    
+    // Show the loading spinner when fetching data
+    const loadingSpinner = document.getElementById('loading-spinner');
+    if (loadingSpinner) {
+        loadingSpinner.classList.remove('hidden');
+    } else {
+        console.error("Loading spinner element not found!");
+    }
+
+    let dates = []; // Move this outside of the then block
+    reportRef.once('value')
+        .then(snapshot => {
+            const allData = snapshot.val();
+
+            // Handle date ranges
+            for (const date in allData) {
+                if (toDate) {
+                    if (date >= fromDate && date <= toDate) {
+                        dates.push(date);
+                        processSalesData(allData[date].reportData); // Access reportData directly
+                    }
+                } else {
+                    // Handle single date
+                    if (date === fromDate) {
+                        dates.push(date);
+                        processSalesData(allData[date].reportData);
+                    }
+                }
+            }
+
+            console.log('Fetched dates:', dates); // Log fetched dates
+            if (dates.length === 0) {
+                alert(`No data found for the selected range.`);
+            } else {
+                updateHeading(dates);
+                const numberOfDates = dates.length;
+                displayDailySales();
+                drawCharts(numberOfDates); // Pass the number of dates here
+                displaySalesSummary(dates, allData); // Call to display sales summary
+                categorizeSalesChanges(); // Call to populate the tables after processing
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching data: ", error);
+            const salesSummaryElement = document.getElementById('sales-summary');
+            if (salesSummaryElement) {
+                salesSummaryElement.innerHTML = '<p>Error loading sales data.</p>';
+            } else {
+                console.error("Sales summary element not found!");
+            }
+        })
+        .finally(() => {
+            // Hide the loading spinner after data processing
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('hidden');
+            }
+        });
+}
+
+
+
+
+
+    
+    // Function to calculate percent lost in revenue
+function calculatePercentLostInRevenue(expectedTotalSales, actualSales) {
+    const percentLost = ((expectedTotalSales - actualSales) / expectedTotalSales) * 100;
+    return percentLost.toFixed(2);
+}
+
+// Function to fetch actual sales and calculate percent lost for each day
+function calculateDailyPercentLost(dates, allData) {
+    // Multiply expected total sales by the number of days in the selected range
+    let totalExpectedSales = 15158.50 * dates.length;
+    let totalActualSales = 0;
+
+    dates.forEach(date => {
+        // Assuming `date` is the key and each node contains actualSales
+        const actualSales = parseFloat(allData[date].totals.actualSales) || 0;
+        totalActualSales += actualSales;
+    });
+
+    // Calculate percent lost in revenue
+    const percentLost = calculatePercentLostInRevenue(totalExpectedSales, totalActualSales);
+
+    // Determine whether it's a loss or a gain
+    const message = (percentLost < 0)
+        ? `<strong>Gain in Revenue:</strong> ${Math.abs(percentLost)}%`
+        : `<strong>Lost in Revenue:</strong> ${percentLost}%`;
+
+    // Create a container div for the display
+    const summaryContainer = document.createElement('div');
+    summaryContainer.classList.add('summary-container');
+
+    // Create and append the title heading
+    const title = document.createElement('h3');
+    title.textContent = "Sales Performance Summary: Expected  Average Sale vs. Obtained Sales";
+    title.style.color = 'red'; // Set title color to red
+    title.style.textAlign = 'center'; // Center the title text
+    summaryContainer.appendChild(title); // Append the title to the summary container
+
+    // Add each display inside circular divs
+    summaryContainer.innerHTML += `
+    <div class="circle-container left">
+        <p><strong>Expected Sales</strong><br>${totalExpectedSales.toFixed(2)} Ghs</p>
+    </div>
+    <div class="circle-container center">
+        <p><strong>Obtained Sales</strong><br>${totalActualSales.toFixed(2)} Ghs</p>
+    </div>
+    <div class="circle-container right">
+        <p>${message}</p>
+    </div>
+    <div class="redirect-button">
+        <a href="index3.html" class="small-button">See Daily Average Sales</a>
+    </div>
+`;
+
+// CSS Styling for the button
+const style = document.createElement("style");
+style.innerHTML = `
+    .small-button {
+        display: inline-block;
+        padding: 5px 10px;
+        font-size: 0.8em;
+        color: white;
+        background-color: #4CAF50;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    .small-button:hover {
+        background-color: #45a049;
+    }
+`;
+document.head.appendChild(style);
+
+    // Append the container to the charts container
+    document.getElementById('charts-container').appendChild(summaryContainer);
+}
+
+// Function to display sales summary
+function displaySalesSummary(dates, allData) {
+    calculateDailyPercentLost(dates, allData); // Calculate percent lost
+    drawPieChart(); // Draw the pie chart after calculating percent lost
+}
+
+// Function to process sales data
+function processSalesData(reportData) {
+    reportData.forEach(itemData => {
+        if (itemsToTrack.includes(itemData.Items)) {
+            const quantitySold = parseFloat(itemData['Total Quantity Sold for the Day']) || 0;
+            DailySales[itemData.Items] += quantitySold;
+        }
+    });
+}
+
+
+
+    
+
+    // Function to display the Daily sales
+    function displayDailySales() {
+        const summaryDiv = document.getElementById('sales-summary');
+        summaryDiv.innerHTML = ''; // Clear loading text
+
+        const title = document.createElement('h3');
+    title.textContent = "List of Items Sold and the Total Quantity Sold";
+    summaryDiv.appendChild(title);
+
+    // Style the title
+    title.style.color = 'red'; // Set the color to wheat
+    title.style.textAlign = 'center'; // Center the title text
+
+    title.style.fontWeight = 'bold'; // Make it bold
+    title.style.margin = '20px 0'; // Add margin for spacing
+
+
+        const table = document.createElement('table');
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `<th>Item</th><th>Total Sales</th>`;
+        table.appendChild(headerRow);
+
+        for (const item in DailySales) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${item}</td><td>${DailySales[item]}</td>`;
+            table.appendChild(row);
+        }
+
+        summaryDiv.appendChild(table);
+    }
+
+
+
+
+
+    
+    // Function to draw charts
+function drawCharts(numberOfDates) {
+    const chartsContainer = document.getElementById('charts-container');
+    chartsContainer.innerHTML = ''; // Clear previous charts
+
+    // Create and append the title heading
+    const title = document.createElement('h3');
+    title.textContent = "Sales Performance Analysis: Actual Qty Sold vs. Average Qty Sold"; // Your chart title here
+    title.style.color = 'red'; // Set title color to wheat
+    chartsContainer.appendChild(title); // Append the title to the charts container
+
+    const averageColors = ['rgba(75, 192, 192, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)'];
+    const currentColors = ['rgba(255, 99, 132, 0.6)', 'rgba(255, 159, 64, 0.6)', 'rgba(153, 102, 255, 0.6)'];
+
+    // Iterate through the items to track and draw charts
+    for (let i = 0; i < itemsToTrack.length; i += 3) {
+        const batchItems = itemsToTrack.slice(i, i + 3);
+        const batchSales = batchItems.map(item => DailySales[item] || 0);
+
+        // Multiply the fixed average sales by the number of dates
+        const adjustedAverageSales = batchItems.map(item => (fixedAverageSales[item] || 0) * numberOfDates);
+
+        const canvasId = `salesChart${i / 3}`;
+        const canvas = document.createElement('canvas');
+        canvas.id = canvasId;
+        chartsContainer.appendChild(canvas);
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: batchItems,
+                datasets: [
+                    {
+                        label: 'Average Sales',
+                        data: adjustedAverageSales,  // Use Average Sales here
+                        backgroundColor: averageColors.slice(0, batchItems.length),
+                        borderColor: averageColors.slice(0, batchItems.length).map(color => color.replace('0.6', '1')),
+                        borderWidth: 1,
+                        datalabels: { anchor: 'end', align: 'end', formatter: value => value, color: '#000', font: { weight: 'bold' }, display: true }
+                    },
+                    {
+                        label: 'Current Sales',
+                        data: batchSales,  // Actual sales data
+                        backgroundColor: currentColors.slice(0, batchItems.length),
+                        borderColor: currentColors.slice(0, batchItems.length).map(color => color.replace('0.6', '1')),
+                        borderWidth: 1,
+                        datalabels: { anchor: 'end', align: 'end', formatter: value => value, color: '#000', font: { weight: 'bold' }, display: true }
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } },
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    datalabels: { anchor: 'end', align: 'start', offset: -10, formatter: value => value, color: '#000', font: { weight: 'bold' }, display: true }
+                }
+            }
+        });
+
+        displayDifferences(batchItems, adjustedAverageSales, batchSales);
+    }
+}
+
+
+    // Function to display differences in sales
+    function displayDifferences(batchItems, averageDailySales, batchSales) {
+        const differenceContainer = document.createElement('div');
+        differenceContainer.style.display = 'flex';
+        differenceContainer.style.flexDirection = 'column';
+        differenceContainer.style.marginTop = '10px';
+
+        batchItems.forEach((item, index) => {
+            const average = averageDailySales[index];
+            const current = batchSales[index];
+            let difference = current - average;
+            let percentageChange = average === 0 ? (current > 0 ? 'Infinity' : '0') : ((Math.abs(difference) / average) * 100).toFixed(2);
+            let trend = '';
+
+            if (difference > 0) {
+                trend = `${item}: ${percentageChange}% rise in sales`;
+            } else if (difference < 0) {
+                trend = `${item}: ${Math.abs(percentageChange)}% drop in sales`;
+            } else {
+                trend = `${item}: No change in sales`;
+            }
+
+            const trendMessage = document.createElement('span');
+            trendMessage.innerText = trend;
+            differenceContainer.appendChild(trendMessage);
+        });
+
+        document.getElementById('charts-container').appendChild(differenceContainer);
+    }
+
+    // Ensure to register ChartDataLabels
+    Chart.register(ChartDataLabels);
+    function calculatePercentChanges() {
+    let totalIncrease = 0;
+    let totalDrop = 0;
+
+    const increaseTableRows = document.querySelectorAll('#increase-table tr:not(:first-child)');
+    const decreaseTableRows = document.querySelectorAll('#decrease-table tr:not(:first-child)');
+
+    // Sum up the increases
+    increaseTableRows.forEach(row => {
+        const percentChange = parseFloat(row.cells[1].textContent) || 0; // Use the percent values directly
+        console.log("Increase Value:", percentChange); // Debugging
+        totalIncrease += percentChange; // Sum the percent increases
+    });
+
+    // Sum up the drops
+    decreaseTableRows.forEach(row => {
+        const percentChange = parseFloat(row.cells[1].textContent) || 0; // Use the percent values directly
+        console.log("Drop Value:", percentChange); // Debugging
+        totalDrop += percentChange; // Sum the percent drops
+    });
+
+    console.log("Total Increase:", totalIncrease); // Debugging
+    console.log("Total Drop:", totalDrop); // Debugging
+
+    return { totalIncrease, totalDrop };
+}
+
+
+
+
+
+
+
+
+
+
+    // Function to categorize sales changes into tables
+    function categorizeSalesChanges() {
+        const trendMessages = document.querySelectorAll('#charts-container span'); // Adjust this selector as needed
+        const increaseTable = document.getElementById('increase-table');
+        const decreaseTable = document.getElementById('decrease-table');
+        const noChangeTable = document.getElementById('no-change-table');
+
+        trendMessages.forEach((message) => {
+            const trendText = message.textContent.trim(); // Get and trim the text content of the span
+
+            if (!trendText.includes(': ')) return; // Skip if the format is not as expected
+
+            const [item, change] = trendText.split(': '); // Split the message into item and change
+
+            // Categorize and add to the appropriate table
+            if (change.includes('rise')) {
+                addRow(increaseTable, item.trim(), change.split(' ')[0]); // Extract percentage and add to increase table
+            } else if (change.includes('drop')) {
+                addRow(decreaseTable, item.trim(), change.split(' ')[0]); // Extract percentage and add to decrease table
+            } else if (change.includes('No change')) {
+                addRow(noChangeTable, item.trim(), change); // Add to no change table
+            }
+        });
+    }
+
+    // Function to add a row to a specified table
+    function addRow(table, item, percentChange) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${item}</td><td>${percentChange}</td>`;
+        table.appendChild(row);
+    }
+
+    // Function to navigate back to index.html
+    document.getElementById('backButton').onclick = function() {
+        window.location.href = 'index.html';
+    };
+
+    // Function to open the date selection popup
+    function showDatePopup() {
+        document.getElementById('datePopup').style.display = 'flex';
+    }
+
+    // Show the date selection popup on page load
+    window.onload = showDatePopup;
+</script>
+
+<script>
+    
+
+    // Function to draw the pie chart
+    function drawPieChart() {
+    const { totalIncrease, totalDrop } = calculatePercentChanges();
+
+    // Check if the canvas already exists, if not create it
+    let pieChartCanvas = document.getElementById('salesPieChart');
+    
+    if (!pieChartCanvas) {
+        // Create a canvas element for the pie chart
+        pieChartCanvas = document.createElement('canvas');
+        pieChartCanvas.id = 'salesPieChart'; 
+        document.getElementById('charts-container').appendChild(pieChartCanvas);
+    }
+
+    // Now create the chart
+    new Chart(pieChartCanvas, {
+        type: 'pie',
+        data: {
+            // labels: ['Total Percent Increase', 'Total Percent Drop'],
+            datasets: [{
+                data: [totalIncrease, totalDrop],
+                backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                datalabels: {
+                    formatter: (value, ctx) => {
+                        const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1); // Format with one decimal point
+                        return `${percentage}%`;
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+</script>

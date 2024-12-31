@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expected Sales Calculation</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Header Styling */
+        h1 {
+            font-size: 18px;
+            text-align: center;
+            color: #4CAF50;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Total Sales Styling */
+        #totalSales {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            color: #4CAF50;
+            margin: 20px 0;
+            padding: 10px;
+            border-top: 2px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Average Sales of Listed Items Based on Past Records</h1>
+
+<table id="salesTable">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Unit Price (GHS)</th>
+            <th>Average Sales</th>
+            <th>Expected Sales (GHS)</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<div id="totalSales"></div>
+
+<script>
+    const itemPrices = {
+        "Banku": 10,
+        "Eba": 10,
+        "Rice Ball": 10,
+        "Lagba": 10,
+        "Amala": 10,
+        "Tz": 10,
+        "Waghashi": 10,
+        "Fried Meat": 15,
+        "Tuna": 10,
+        "Fried Fish": 15,
+        "Peanut Soup (Protein)": 15,
+        "Cow Tail/Wele": 20,
+        "Agushi Soup Only": 15,
+        "Agushi Soup (Protein)": 15,
+        "Salmon": 20,
+        "Intestine": 15,
+        "Okro Soup Only": 10,
+        "Okro Soup (Protein)": 15,
+        "Palm Nut Soup (Protein)": 15,
+        "Egg Stew": 10,
+        "Kontomire": 10,
+        "Cabbage Stew": 10,
+        "Fried Goat": 20,
+        "Cake": 20,
+        "Meat Pie": 10,
+        "Cup Cake": 5,
+        "Spring Roll": 3,
+        "Biscuit": 10,
+        "Samosa": 3,
+        "Plantain Chips 10 Ghs": 10,
+        "Plantain Chips 20 Ghs": 20,
+        "Plantain Chips 40 Ghs": 50,
+        "Plantain Chips 60 Ghs": 50,
+        "Chin Chin 10 Ghs": 10,
+        "Chin Chin 20 Ghs": 20,
+        "Chin Chin 40 Ghs": 40,
+        "Chin Chin 60 Ghs": 60,
+        "Labadi Yam with Chofi": 80,
+        "Fries with Grilled Chicken": 80,
+        "Fried Yam with Grilled Chicken": 80,
+        "Chofi with fried yam": 80,
+        "Chofi": 30,
+        "Chofi with French Fries": 80,
+        "Jollof Rice": 25,
+        "Fried Rice": 25,
+        "Fried Chicken": 15,
+        "Grilled Chicken": 40,
+        "Plain Rice": 20,
+        "120 Acheke Tilapia": 120,
+        "150 Acheke and Tilapia": 150,
+        "Acheke and Cassava Fish": 120,
+        "Banku and Tilapia 100": 100,
+        "Banku and Tilapia 120": 120,
+        "Jollof with Tilapia": 100,
+        "Fried Rice with Tilapia": 100,
+        "Acheke with Chicken": 100,
+        "Plain Rice With Tilapia": 100,
+        "Yam Chips and Tilapia": 100,
+        "Extra Tilapia 80": 80,
+        "Ghs 100 Extra Tilapia": 100,
+        "Extra Fried Egg": 5,
+        "Cooked Egg": 5,
+        "Extra Plantain": 10,
+        "Extra Acheke": 15,
+        "Extra Chili": 5,
+        "Cooked Yam": 2,
+        "Chicken stew (Protein)": 15,
+        "Meat stew (Protein)": 10,
+        "Assorted Jollof": 70,
+        "Assorted Noodles": 80,
+        "Tilapia Light soup (Protein)": 40,
+        "Goat Light Soup (Protein)": 25,
+        "Chicken light Soup (Protein)": 15,
+        "Meat light soup (Protein)": 20,
+        "Dry Fish": 30,
+        "Snail": 20,
+        "Fufu": 20,
+        "Blue Jean": 20,
+"Martinellis": 15,
+"Mojito": 15,
+"Can Sprite": 12,
+"Arizonal": 25,
+"Novus": 20,
+"Coke": 12,
+"Fanta": 12,
+"Frutelli": 35,
+"Ceres": 45,
+"Hollandia 1L": 28,
+"Tarczyn": 17,
+"Kallypo": 5,
+"B.B Cocktail": 15,
+"Welch": 40,
+"Bel-Aqua": 3,
+"Donsimon 1L": 12,
+"Can Donsimon": 12,
+"Can Malt": 15,
+"Rab's Pine-Ginger Juice": 15,
+"Rab's Sobo": 15,
+"Rab's Tiger Nut Juice": 15,
+"Molinera": 20,
+"Lucozade": 15,
+"Abest": 15
+
+    };
+
+    const fixedAverageSales = {
+    "Banku": 12,
+    "Eba": 2,
+    "Rice Ball": 5,
+    "Lagba": 8,
+    "Amala": 2,
+    "Tz": 12,
+    "Waghashi": 24,
+    "Fried Meat": 9,
+    "Tuna": 12,
+    "Fried Fish": 14,
+    "Peanut Soup (Protein)": 2,
+    "Cow Tail/Wele": 6,
+    "Agushi Soup Only": 2,
+    "Agushi Soup (Protein)": 1,
+    "Salmon": 4,
+    "Intestine": 7.5,
+    "Okro Soup Only": 4,
+    "Okro Soup (Protein)": 4,
+
+    "Palm Nut Soup (Protein)": 2,
+    "Egg Stew": 4,
+    "Kontomire": 5,
+    "Cabbage Stew": 3,
+    "Fried Goat": 5,
+    "Cake": 1,
+    "Meat Pie": 4,
+    "Cup Cake": 2,
+    "Spring Roll": 10,
+    "Biscuit": 3,
+    "Samosa": 12,
+    "Plantain Chips 10 Ghs": 1,
+    "Plantain Chips 20 Ghs": 1,
+    "Plantain Chips 40 Ghs": 1,
+    "Plantain Chips 60 Ghs": 1,
+    "Chin Chin 10 Ghs": 1,
+    "Chin Chin 20 Ghs": 1,
+    "Chin Chin 40 Ghs": 1,
+    "Chin Chin 60 Ghs": 1,
+    "Labadi Yam with Chofi": 2,
+    "Fries with Grilled Chicken": 1,
+    "Fried Yam with Grilled Chicken": 1,
+    "Chofi with fried yam":  1,
+    "Chofi":  4,
+    "Chofi with French Fries": 2,
+    "Jollof Rice": 30,
+    "Fried Rice": 15,
+    "Fried Chicken": 88,
+    "Grilled Chicken": 10,
+    "Plain Rice": 18,
+    "120 Acheke Tilapia": 20,
+    "150 Acheke and Tilapia": 16,
+    "Acheke and Cassava Fish": 1,
+    "Banku and Tilapia 100": 2,
+    "Banku and Tilapia 120": 1,
+    "Jollof with Tilapia": 1,
+    "Fried Rice with Tilapia": 1,
+    "Acheke with Chicken": 1,
+    "Plain Rice With Tilapia": 1,
+    "Yam Chips and Tilapia": 1,
+    "Extra Tilapia 80": 1,
+    "Ghs 100 Extra Tilapia": 1,
+    "Extra Fried Egg": 1,
+    "Cooked Egg": 5,
+    "Extra Plantain": 2,
+    "Extra Acheke": 6,
+    "Extra Chili": 1,
+    "Cooked Yam": 15,
+
+
+
+    "Chicken stew (Protein)": 4,
+    "Meat stew (Protein)": 7,
+    "Assorted Jollof": 1,
+    "Assorted Noodles": 2,
+    "Tilapia Light soup (Protein)": 4,
+    "Goat Light Soup (Protein)": 6,
+    "Chicken light Soup (Protein)": 3,
+    "Meat light soup (Protein)": 4,
+    "Dry Fish": 4,
+    "Snail": 3,
+    "Fufu": 7, 
+    "Blue Jean": 1,
+    "Martinellis": 4,
+    "Mojito": 8,
+    "Can Sprite": 7,
+    "Arizonal": 4,
+    "Novus": 5,
+    "Coke": 4,
+    "Fanta": 4,
+
+    "Frutelli": 4,
+    "Ceres": 2,
+    "Hollandia 1L": 2,
+    "Tarczyn": 2,
+    "Kallypo": 9,
+    "B.B Cocktail": 4,
+    "Welch": 1,
+    "Bel-Aqua": 33,
+
+    "Donsimon 1L": 5,
+    "Can Donsimon": 3,
+    "Can Malt": 9,
+    "Rab's Pine-Ginger Juice": 6,
+    "Rab's Sobo": 7,
+    "Rab's Tiger Nut Juice": 8,
+    "Molinera": 1,
+    "Lucozade": 1,
+    "Abest": 4,
+    
+    };
+
+    function calculateExpectedSales(itemPrices, fixedAverageSales) {
+        const expectedSalesSummary = [];
+        for (const item in itemPrices) {
+            const unitPrice = itemPrices[item];
+            const averageSales = fixedAverageSales[item] || 0;
+            const expectedSales = unitPrice * averageSales;
+            expectedSalesSummary.push({
+                item: item,
+                unitPrice: unitPrice,
+                averageSales: averageSales,
+                expectedSales: expectedSales
+            });
+        }
+        return expectedSalesSummary;
+    }
+
+    const expectedSales = calculateExpectedSales(itemPrices, fixedAverageSales);
+    const salesTableBody = document.getElementById('salesTable').getElementsByTagName('tbody')[0];
+
+    expectedSales.forEach(sale => {
+    const row = salesTableBody.insertRow();
+    row.insertCell(0).textContent = sale.item;
+    row.insertCell(1).textContent = sale.unitPrice.toFixed(2);
+    row.insertCell(2).textContent = sale.averageSales.toFixed(2);
+    row.insertCell(3).textContent = sale.expectedSales.toFixed(2);
+});
+
+const totalExpectedSales = expectedSales.reduce((total, sale) => total + sale.expectedSales, 0);
+document.getElementById('totalSales').innerHTML = `
+    Total Expected Sales: ${totalExpectedSales.toFixed(2)} GHS
+    <br>
+    <a href="index2.html" class="small-back-button">Go Back</a>
+`;
+
+// Add CSS styling for the small back button
+const style = document.createElement("style");
+style.innerHTML = `
+    .small-back-button {
+        display: inline-block;
+        padding: 5px 10px;
+        font-size: 0.8em;
+        color: white;
+        background-color: #4CAF50;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-top: 10px;
+        transition: background-color 0.3s;
+    }
+    .small-back-button:hover {
+        background-color: #45a049;
+    }
+`;
+document.head.appendChild(style);
+
+
+</script>
+
+</body>
+</html>

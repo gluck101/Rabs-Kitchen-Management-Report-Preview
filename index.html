@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=3.0">
+    <title>MANAGEMENT REPORT UPDATE</title>
+
+     <!-- Favicon for your site -->
+    <link rel="icon" href="rabs.jpeg" type="image/png">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow-y: auto; /* Allow vertical scrolling on the entire page */
+        }
+    
+        h1 {
+    text-align: center;
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px;
+    margin: 0;
+    display: block; /* Ensure the header is visible */
+}
+        /* Data Display Area */
+        #data-display {
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px; /* Move the table down to ensure headers are visible */
+            max-height: 80vh; /* Limit the height of the table container */
+            overflow-y: auto; /* Enable vertical scrolling */
+            overflow-x: auto; /* Enable horizontal scrolling for wide tables */
+            margin-left: -20px; /* Align the table to the left */
+        }
+    
+        table {
+            width: auto; /* Set width to auto to fit content */
+            max-width: 800px; /* Set a maximum width for the table */
+            border-collapse: collapse;
+            margin-top: 0px; /* Ensure the table doesn't move up */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            height: auto; /* Allow the table to grow dynamically */
+        }
+    
+        /* Sticky table header */
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+            position: sticky;
+            top: -20px; /* Make sure the header stays at the top */
+            z-index: 1; /* Keep header on top, but lower than the first column */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for separation */
+        }
+    
+        /* Sticky first column (Items column) with its own nice color */
+        th:first-child, td:first-child {
+            position: sticky;
+            left: 0; /* Stick the first column to the left */
+            z-index: 2; /* Increase z-index of the first column to ensure it's above the header */
+            background-color: #FFEB3B; /* Nice yellow background color for the Items column */
+            color: #333; /* Dark text color for good contrast */
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Shadow to separate it from other columns */
+            font-weight: bold; /* Make the text bold for emphasis */
+        }
+    
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+    
+        /* Row styling */
+        table tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+    
+        table tr:nth-child(even) {
+            background-color: #e0f7e4;
+        }
+    
+        table tr:hover {
+            background-color: #c8e6c9;
+        }
+    
+        table td {
+            color: #333;
+        }
+    
+        /* Totals Styling */
+        .totals-row {
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+    
+        /* Button Styling */
+        .view-report-button {
+            background-color: #f10606;
+            color: white;
+            padding: 10px 20px;
+            margin: 20px auto;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: block;
+        }
+    
+        /* Footer adjustment and styling */
+        .totals-footer {
+            margin-top: 60px;
+            padding: 20px;
+            background-color: #3E4C59; /* Nice dark background */
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px; /* Widened footer */
+            margin-left: auto;
+            margin-right: auto;
+            font-family: 'Arial', sans-serif;
+            position: relative;
+            text-align: left;
+        }
+    
+        .totals-footer p {
+            margin: 8px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+    
+        .totals-footer p strong {
+            font-weight: 700;
+            color: #FFD700; /* Gold color for strong text */
+        }
+    
+        .totals-footer p .sales-value {
+            font-size: 18px; /* Larger font size */
+            font-weight: bold;
+            color: #FFD700; /* Gold for emphasis */
+        }
+    
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+    
+            .totals-footer {
+                font-size: 12px;
+                padding: 8px;
+            }
+        }
+    
+        @media (max-width: 480px) {
+            th, td {
+                font-size: 10px;
+                padding: 5px;
+            }
+    
+            .totals-footer {
+                font-size: 10px;
+                padding: 5px;
+            }
+    
+            th:first-child, td:first-child {
+                width: 100px;
+            }
+        }
+    
+   /* Close button styling */
+#close-table-btn {
+    display: block;  /* Initially visible */
+    /* position: fixed; */
+    top: 460px;
+    right: 20px;
+    background-color: #f10606;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1100;  /* Make sure it's above other elements */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#close-table-btn.hidden {
+    display: none;  /* This will hide the button */
+}
+
+    
+        /* Reduce height for smaller table rows */
+        table tr {
+            height: auto;
+        }
+
+
+/* Style for the date list */
+/* Date container (ul) */
+ul#date-list {
+    display: flex;
+    flex-wrap: wrap; /* Allows the items to wrap into multiple rows */
+    justify-content: center; /* Center the dates */
+    gap: 15px; /* Reduces space between each date for smaller screens */
+    padding: 0;
+    margin: 20px 0;
+    list-style-type: none; /* Remove bullet points */
+}
+
+/* Style for each date (li) */
+ul#date-list li {
+    background-color: #f2f2f2;
+    padding: 12px 15px; /* Reduce padding for smaller items */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    cursor: pointer;
+    font-size: 16px; /* Smaller font size */
+    text-align: center;
+    width: calc(33.33% - 30px); /* 3 items per row with gap space */
+    max-width: 150px; /* Reduce max-width for smaller size */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth hover effect */
+}
+
+/* Hover effect for clickable dates */
+ul#date-list li:hover {
+    background-color: #d4e157; /* Change background on hover */
+    transform: translateY(-3px); /* Add slight upward movement on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    ul#date-list li {
+        width: calc(33.33% - 20px); /* Ensures 3 items per row even on smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    ul#date-list li {
+        width: calc(33.33% - 10px); /* Still 3 items per row on mobile but with tighter fit */
+        padding: 10px 12px; /* Reduce padding further for mobile */
+        font-size: 14px; /* Smaller font size for mobile */
+    }
+}
+
+
+
+    /* Style for the view report button */
+    .view-report-button {
+        background-color: #f10606; /* Red background */
+        color: white;
+        padding: 10px 20px;
+        margin: 20px auto;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: block;
+    }
+
+    .view-report-button:hover {
+        background-color: #e53935; /* Darken the button on hover */
+    }
+
+    /* Style for the data display area */
+    #data-display {
+        padding: 20px;
+        text-align: center;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        ul#date-list li {
+            width: 90%; /* Adjust width for smaller screens */
+        }
+
+        .view-report-button {
+            font-size: 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        ul#date-list li {
+            font-size: 16px; /* Smaller font size for mobile */
+        }
+
+
+
+
+        .view-report-button {
+            font-size: 14px;
+        }
+    }
+
+    #data-display.hidden {
+    display: none;  /* Forcefully hide it */
+    height: 0;      /* Set height to 0 */
+    overflow: hidden; /* Prevent overflow */
+    visibility: hidden; /* Ensure it's not visible */
+    opacity: 0;      /* Ensure it's fully invisible */
+}
+
+
+p {
+    text-align: center; /* Center the paragraph text */
+    margin: 10px 0; /* Add margin to give space around the paragraph */
+    font-size: 18px; /* Set a reasonable font size for the paragraph */
+    color: #333; /* Choose a color for better contrast */
+}
+
+
+.white-text {
+    color: white; /* Set text color to white */
+}
+
+/* Additional styles for the totals footer if needed */
+.totals-footer {
+    background-color: #333; /* Example background color */
+    padding: 10px; /* Add some padding */
+    border-radius: 5px; /* Round the corners */
+}
+
+
+    </style>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+        
+</head>
+<body>
+
+    <h1>RABS KITCHEN SALES REPORT DATABASE</h1>
+    <p id="date-selection-message" style="color: rgb(252, 4, 4);">Select a date to view report details.</p>
+
+    <!-- List of Dates -->
+    <ul id="date-list">
+        <!-- Dynamically populated dates -->
+    </ul>
+    
+    <button class="view-report-button" onclick="viewReportSummary()">See Today's Sale Analysis</button>
+    
+    <!-- Data Display Area -->
+    <div id="data-display">
+    </div>
+    
+
+<!-- Close Button for Table -->
+<button id="close-table-btn" style="display: none; position: fixed; margin-top: -200px; right: 270px; background-color: #f10606; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 18px; cursor: pointer;">Close Table</button>
+
+    <!-- Audio element for notification sound -->
+    <audio id="notification-sound" src="message.mp3" preload="auto"></audio>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-performance.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-messaging.js"></script>
+
+    <script>
+        // Initialize Firebase  
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPaGSjayV3tk9KKH5FjvRCkdlcWGczR_M",
+  authDomain: "rabs-kitchen-report-sheet.firebaseapp.com",
+  projectId: "rabs-kitchen-report-sheet",
+  storageBucket: "rabs-kitchen-report-sheet.appspot.com",
+  messagingSenderId: "856442665646",
+  appId: "1:856442665646:web:bd769e9c230bee32244b3f",
+  measurementId: "G-F5XBJY8PB7"
+};
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const messaging = firebase.messaging();
+
+
+        // Reference to the date list element
+        const dateList = document.getElementById('date-list');
+        const dataDisplay = document.getElementById('data-display');
+        const notificationSound = document.getElementById('notification-sound');
+
+        // Set up a listener to monitor Firebase for new dates (reports)
+        const reportRef = db.ref(); // assuming reports are stored at the root
+
+        reportRef.on('child_added', (snapshot) => {
+            const date = snapshot.key;  // The date is the key of each child node
+            addDateToList(date);
+            playNotificationSound();  // Play sound when a new date is added
+        });
+
+        // Function to add a date to the list in the UI
+        // Function to add a date to the list in the UI with status based on Actual Sales
+function addDateToList(date) {
+    const li = document.createElement('li');
+    li.textContent = date;
+    li.setAttribute('data-date', date);
+
+    // Fetch data for the date to determine status (Completed/Report in Progress)
+    fetchDataForStatus(date, li);
+
+    li.addEventListener('click', () => fetchDataForDate(date));  // Fetch data on click
+    dateList.appendChild(li);
+}
+
+// Function to fetch data and determine if Actual Sales exists
+// Function to fetch data and determine if Actual Sales exists or is valid
+function fetchDataForStatus(date, liElement) {
+    const reportRef = db.ref(date);  // Reference to the report data for that date
+    reportRef.once('value')
+        .then(snapshot => {
+            const data = snapshot.val();
+            const actualSales = data?.totals?.actualSales;
+
+            // Check if actualSales is greater than 0
+            if (actualSales && !isNaN(actualSales) && actualSales > 0) {
+                // Actual Sales is present and valid, mark as completed with bold tick
+                liElement.innerHTML += ' <span style="color: green;">&nbsp;&nbsp;Report Completed <strong style="font-size: 20px;">✔</strong></span>';
+            } else {
+                // Actual Sales is 0, N/A, or invalid, mark as report in progress
+                liElement.innerHTML += ' <span style="color: red;">&nbsp;&nbsp;Report in Progress</span>';
+            }
+        })
+        .catch(error => {
+            console.error("Error checking status: ", error);
+            liElement.innerHTML += ' <span style="color: red;">&nbsp;&nbsp;Error</span>';
+        });
+}
+
+
+// Function to fetch and display data for the selected date
+function fetchDataForDate(date) {
+    dataDisplay.innerHTML = '<p>Loading data...</p>';  // Show loading message
+
+    const reportRef = db.ref(date);  // Assuming date nodes match exactly
+    reportRef.once('value')
+        .then(snapshot => {
+            const data = snapshot.val();
+            if (data) {
+                displayData(data);
+            } else {
+                dataDisplay.innerHTML = '<p>No data found for this date.</p>';
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching data: ", error);
+            dataDisplay.innerHTML = '<p>Error loading data.</p>';
+        });
+}
+
+
+      // Function to display data in a table
+function displayData(data) {
+    dataDisplay.innerHTML = '';  // Clear previous data
+
+    const table = document.createElement('table');
+
+    // Create table header
+    const headerRow = document.createElement('tr');
+    ['Items', 'Quantity Sent', 'Unit Price (Ghs)', 'Total Quantity Sold for the Day', 'Total Amount Sold (Ghs)', 'Received By', 'Left Over Quantity', 'Total Amount (Left Over)', 'Missing', 'Amount of Missing Items'].forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+    });
+    table.appendChild(headerRow);
+
+    // Populate table rows with the fetched data
+    data.reportData.forEach(item => {
+        const row = document.createElement('tr');
+        ['Items', 'Quantity Sent', 'Unit Price (Ghs)', 'Total Quantity Sold for the Day', 'Total Amount Sold (Ghs)', 'Received By', 'Left Over Quantity', 'Total Amount (Left Over)', 'Missing', 'Amount of Missing Items'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = item[key];
+            row.appendChild(td);
+        });
+        table.appendChild(row);
+    });
+
+    // Add totals row at the end of the table
+    const totalsRow = document.createElement('tr');
+    totalsRow.classList.add('totals-row');
+    totalsRow.innerHTML = `
+        <td><strong>Total</strong></td>
+        <td colspan="3"></td>
+        <td>${data.totals.totalSold}</td>
+        <td></td>
+        <td></td>
+        <td>${data.totals.totalLeftover}</td>
+        <td></td>
+        <td>${data.totals.totalMissingAmount}</td>
+    `;
+    table.appendChild(totalsRow);
+
+    dataDisplay.appendChild(table);
+
+    // Display Total Sales, Actual Sales, and Remarks below the table
+    if (data.totals) {
+        const totalsFooter = document.createElement('div');
+        totalsFooter.classList.add('totals-footer');
+        totalsFooter.innerHTML = `
+            <p><strong>Total Sales (Ghs): </strong> <span class="white-text">${data.totals.totalSold}</span></p>
+            <p><strong>Actual Sales (Ghs): </strong> <span class="white-text">${data.totals.actualSales}</span></p>
+            <p><strong>Remarks: </strong> <span class="white-text">${data.totals.remarks}</span></p>
+            <button class="view-report-button" onclick="viewReportSummary()">See Today's Sale Analysis</button>
+            <button id="close-table-btn" onclick="closeTableFullscreen()">Close Table</button>
+        `;
+        dataDisplay.appendChild(totalsFooter);
+    } else {
+        dataDisplay.innerHTML += '<p>No totals data available.</p>';
+    }
+
+    // Hide the date selection message
+    const message = document.getElementById('date-selection-message');
+    message.style.display = 'none'; // Hide the message
+}
+
+
+//         messaging.requestPermission()
+//   .then(() => {
+//     console.log('Notification permission granted.');
+//     return messaging.getToken();
+//   })
+//   .then((token) => {
+//     console.log('FCM Token:', token);  // Send this token to your server to send notifications
+//   })
+//   .catch((error) => {
+//     console.error('Unable to get permission to notify.', error);
+//   });
+
+
+
+// Redirect to index2.html when the button is clicked
+function viewReportSummary() {
+            window.location.href = 'index2.html';  // Redirect to the report summary page
+        }
+
+  messaging.onMessage((payload) => {
+  console.log('Message received. ', payload);
+  // Display notification or update the UI
+  new Notification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: 'path/to/icon.png'  // Optional icon
+  });
+});
+
+
+
+
+    </script>
+
+
+<script>
+   function closeTableFullscreen() {
+    const dataDisplay = document.getElementById('data-display');
+    if (dataDisplay) {
+        console.log("Closing data display");
+
+        setTimeout(() => {
+            dataDisplay.style.display = 'none';
+            dataDisplay.style.height = '0';
+            dataDisplay.style.overflow = 'hidden';
+            dataDisplay.style.visibility = 'hidden';
+        }, 100);  // Wait 100ms before forcefully hiding
+    }
+
+    const closeButton = document.getElementById('close-table-btn');
+    if (closeButton) {
+        closeButton.style.display = 'none';
+    }
+
+    document.querySelector('h1').style.display = 'block';
+    document.getElementById('date-container').style.display = 'flex';
+    document.querySelector('.view-report-button').style.display = 'block';
+}
+
+
+
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+admin.initializeApp();
+
+exports.sendReportNotification = functions.database.ref('/reports/{reportId}')
+  .onCreate((snapshot, context) => {
+    const reportData = snapshot.val();
+    
+    const message = {
+      notification: {
+        title: 'New Report Added',
+        body: `A new report for ${reportData.date} has been submitted.`,
+      },
+      topic: 'all-devices'  // Send to all devices subscribed to this topic
+    };
+
+    return admin.messaging().send(message)
+      .then((response) => {
+        console.log('Successfully sent message:', response);
+      })
+      .catch((error) => {
+        console.error('Error sending message:', error);
+      });
+  });
+
+
+
+
+// Function to hide other page elements and display table in full-screen mode
+function showTableInFullscreen() {
+    document.getElementById('data-display').classList.add('fullscreen-table');
+    document.querySelector('h1').style.display = 'none';  // Hide the title
+    document.getElementById('date-list').style.display = 'none';  // Hide the date list
+    document.querySelector('.view-report-button').style.display = 'none';  // Hide the button
+    document.getElementById('close-table-btn').style.display = 'block';  // Show the close button
+}
+
+// Modify the existing fetchDataForDate function to include full-screen display
+function fetchDataForDate(date) {
+    dataDisplay.innerHTML = '<p>Loading data...</p>';  // Show loading message
+
+    const reportRef = db.ref(date);  // Assuming date nodes match exactly
+    reportRef.once('value')
+        .then(snapshot => {
+            const data = snapshot.val();
+            if (data) {
+                displayData(data);
+                showTableInFullscreen();  // Make the table fullscreen when data is displayed
+            } else {
+                dataDisplay.innerHTML = '<p>No data found for this date.</p>';
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching data: ", error);
+            dataDisplay.innerHTML = '<p>Error loading data.</p>';
+        });
+}
+
+// Add event listener for close button
+document.getElementById('close-table-btn').addEventListener('click', closeTableFullscreen);
+</script>
+
+
+<script>
+    // Function to restore the page back to normal
+    function closeTableFullscreen() {
+        document.getElementById('data-display').classList.remove('fullscreen-table');
+        document.querySelector('h1').style.display = 'block';  // Show the title again
+        document.getElementById('date-list').style.display = 'flex';  // Show the date list again
+        document.querySelector('.view-report-button').style.display = 'block';  // Show the button again
+        document.getElementById('close-table-btn').style.display = 'none';  // Hide the close button
+    }
+    
+    // Function to hide other page elements and display table in full-screen mode
+    function showTableInFullscreen() {
+        document.getElementById('data-display').classList.add('fullscreen-table');
+        document.querySelector('h1').style.display = 'none';  // Hide the title
+        document.getElementById('date-list').style.display = 'none';  // Hide the date list
+        document.querySelector('.view-report-button').style.display = 'none';  // Hide the button
+        document.getElementById('close-table-btn').style.display = 'block';  // Show the close button
+    }
+    
+    // Modify the existing fetchDataForDate function to include full-screen display
+    function fetchDataForDate(date) {
+        dataDisplay.innerHTML = '<p>Loading data...</p>';  // Show loading message
+    
+        const reportRef = db.ref(date);  // Assuming date nodes match exactly
+        reportRef.once('value')
+            .then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    displayData(data);
+                    showTableInFullscreen();  // Make the table fullscreen when data is displayed
+                } else {
+                    dataDisplay.innerHTML = '<p>No data found for this date.</p>';
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching data: ", error);
+                dataDisplay.innerHTML = '<p>Error loading data.</p>';
+            });
+    }
+    
+    // Add event listener for close button after DOM is fully loaded
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log('DOM fully loaded');  // Debugging
+        const closeButton = document.getElementById('close-table-btn');
+        if (closeButton) {
+            console.log('Close button found');  // Debugging
+            closeButton.addEventListener('click', closeTableFullscreen);
+        } else {
+            console.error('Close button not found');  // Debugging
+        }
+    });
+    
+    </script>
+
+
+</body>
+</html>

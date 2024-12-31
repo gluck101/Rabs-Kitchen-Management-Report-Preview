@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract Sales Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #datePopup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8); /* Dim background */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Bring to front */
+        }
+        #datePopup input {
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        .submit-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+        #sales-data-table {
+            display: none; /* Hide the table initially */
+        }
+    </style>
+</head>
+<body>
+
+<h1>Sales Data for Selected Date Range</h1>
+
+<!-- Popup for date range input -->
+<div id="datePopup">
+    <h3 style="color: white;">Select Date Range</h3>
+    <label for="fromDate" style="color: white;">From:</label>
+    <input type="date" id="fromDate">
+    <label for="toDate" style="color: white;">To:</label>
+    <input type="date" id="toDate">
+    <button class="submit-button" id="submitDate">Submit</button>
+</div>
+
+<!-- Table to display sales data -->
+<table id="sales-data-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>First Item</th>
+            <th>Total Quantity Sold</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Data will be inserted here dynamically -->
+    </tbody>
+</table>
+
+<script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.9.1/firebase-database.js"></script>
+<script>
+    // Initialize Firebase
+    const firebaseConfig = {
+            apiKey: "AIzaSyBPaGSjayV3tk9KKH5FjvRCkdlcWGczR_M",
+            authDomain: "rabs-kitchen-report-sheet.firebaseapp.com",
+            projectId: "rabs-kitchen-report-sheet",
+            storageBucket: "rabs-kitchen-report-sheet",
+            messagingSenderId: "856442665646",
+            appId: "1:856442665646:web:bd769e9c230bee32244b3f",
+            measurementId: "G-F5XBJY8PB7"
+        };
+
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const averageSales = {
+        "Banku": 12,
+        "Eba": 2,
+        "Rice Ball": 5,
+        "Lagba": 8,
+        "Amala": 2,
+        "Tz": 12,
+        "Waghashi": 24,
+        "Fried Meat": 9,
+        "Tuna": 12,
+        "Fried Fish": 14,
+        "Peanut Soup (Protein)": 2,
+        "Cow Tail/Wele": 6,
+        "Agushi Soup Only": 2,
+        "Agushi Soup (Protein)": 1,
+        "Salmon": 4,
+        "Intestine": 7.5,
+        "Okro Soup Only": 4,
+        "Okro Soup (Protein)": 4,
+        "Palm Nut Soup (Protein)": 2,
+        "Egg Stew": 4,
+        "Kontomire": 5,
+        "Cabbage Stew": 3,
+        "Fried Goat": 5,
+        "Cake": 1,
+        "Meat Pie": 4,
+        "Cup Cake": 2,
+        "Spring Roll": 10,
+        "Biscuit": 0,
+        "Samosa": 12,
+        "Plantain Chips 10 Ghs": 1,
+        "Plantain Chips 20 Ghs": 1,
+        "Plantain Chips 40 Ghs": 1,
+        "Plantain Chips 60 Ghs": 1,
+        "Chin Chin 10 Ghs": 1,
+        "Chin Chin 20 Ghs": 1,
+        "Chin Chin 40 Ghs": 1,
+        "Chin Chin 60 Ghs": 1,
+        "Labadi Yam with Chofi": 2,
+        "Fries with Grilled Chicken": 1,
+        "Fried Yam with Grilled Chicken": 1,
+        "Chofi with fried yam":  1,
+        "Chofi":  4,
+        "Chofi with French Fries": 2,
+        "Jollof Rice": 30,
+        "Fried Rice": 15,
+        "Fried Chicken": 88,
+        "Grilled Chicken": 10,
+        "Plain Rice": 18,
+        "120 Acheke Tilapia": 20,
+        "150 Acheke and Tilapia": 16,
+        "Acheke and Cassava Fish": 1,
+        "Banku and Tilapia 100": 2,
+        "Banku and Tilapia 120": 1,
+        "Jollof with Tilapia": 1,
+        "Fried Rice with Tilapia": 1,
+        "Acheke with Chicken": 1,
+        "Plain Rice With Tilapia": 1,
+        "Yam Chips and Tilapia": 1,
+        "Extra Tilapia 80": 1,
+        "Ghs 100 Extra Tilapia": 1,
+        "Extra Fried Egg": 1,
+        "Cooked Egg": 5,
+        "Extra Plantain": 2,
+        "Extra Acheke": 6,
+        "Extra Chili": 1,
+        "Cooked Yam": 15,
+        "Chicken stew (Protein)": 4,
+        "Meat stew (Protein)": 7,
+        "Assorted Jollof": 1,
+        "Assorted Noodles": 2,
+        "Tilapia Light soup (Protein)": 4,
+        "Goat Light Soup (Protein)": 6,
+        "Chicken light Soup (Protein)": 3,
+        "Meat light soup (Protein)": 4,
+        "Dry Fish": 4,
+        "Snail": 3,
+        "Fufu": 7
+    };
+
+
+
+
+    // Add event listener to the submit button
+    document.getElementById('submitDate').addEventListener('click', function() {
+        const fromDate = document.getElementById('fromDate').value;
+        const toDate = document.getElementById('toDate').value;
+
+        if (fromDate && toDate) {
+            fetchSalesDataForDateRange(fromDate, toDate);
+            document.getElementById('datePopup').style.display = 'none'; // Hide the popup after submission
+            document.getElementById('sales-data-table').style.display = 'table'; // Show the table
+        } else {
+            alert('Please select a valid date range.');
+        }
+    });
+
+    // Function to fetch and display the first item for each date in the selected range
+    function fetchSalesDataForDateRange(fromDate, toDate) {
+        const reportRef = db.ref(); // Reference to Firebase
+        const tableBody = document.querySelector('#sales-data-table tbody');
+        tableBody.innerHTML = ''; // Clear previous data
+
+        reportRef.once('value').then(snapshot => {
+            const allData = snapshot.val();
+
+            // Loop through the range of dates
+            for (const date in allData) {
+                if (date >= fromDate && date <= toDate) {
+                    if (allData[date].reportData && allData[date].reportData.length > 0) {
+                        const firstItem = allData[date].reportData[0]; // Get the first item
+                        const itemName = firstItem.Items;
+                        const totalQuantitySold = firstItem['Total Quantity Sold for the Day'];
+
+                        // Create a new row in the table
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${date}</td><td>${itemName}</td><td>${totalQuantitySold}</td>`;
+                        tableBody.appendChild(row);
+                    }
+                }
+            }
+        }).catch(error => {
+            console.error("Error fetching data:", error);
+        });
+    }
+
+    // Show date range input popup on page load
+    window.onload = function() {
+        document.getElementById('datePopup').style.display = 'flex';
+        document.getElementById('sales-data-table').style.display = 'none'; // Ensure the table is hidden initially
+    };
+</script>
+
+</body>
+</html>
